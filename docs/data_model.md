@@ -22,3 +22,5 @@ sender_id
 text
 created_at
 is_read
+
+![C:\Users\Ivan\Downloads](img/Untitled.png)
