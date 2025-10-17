@@ -23,4 +23,4 @@ text
 created_at
 is_read
 
-![C:\Users\Ivan\Downloads](img/Untitled.png)
+![ER-graph](https://github.com/Ivan-teapot/tgbot_profRK/blob/main/docs/Untitled.png)
