@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+# Logs
+*.log
+*.pot
+*.po
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+logs/
+debug.log
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment variables
+.env
+*.env
+
+# Docker
+*.pid
+*.seed
+docker-compose.override.yml
