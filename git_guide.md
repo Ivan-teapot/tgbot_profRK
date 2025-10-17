@@ -57,7 +57,7 @@ git pull origin [branch-name]
 
 - Создать feature-ветку    
 git checkout -b feature/[component]/[short-description]   
-Пример: git checkout -b feature/db/add-user-profile-table   
+Пример: git checkout -b main//db/add-user-profile-table   
 
 2. Ежедневная работа
 - Делать коммиты   
