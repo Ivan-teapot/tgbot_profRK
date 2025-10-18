@@ -21,8 +21,6 @@ services:
       - db
     ports:
       - "8000:8000"
-    volumes:
-      - ./service-root:/app
 
   service-user:
     build: 
@@ -34,8 +32,6 @@ services:
       - db
     ports:
       - "8001:8001"
-    volumes:
-      - ./service-user:/app
 
   bot:
     build: .
@@ -45,8 +41,6 @@ services:
     depends_on:
       - service-root
       - db
-    volumes:
-      - .:/app
 
 volumes:
   pgdata:
