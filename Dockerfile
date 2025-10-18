@@ -1,3 +1,4 @@
+# check=skip=UndefinedVar
 FROM python:3.12-slim
 
 # Install system dependencies if needed
