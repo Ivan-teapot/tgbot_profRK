@@ -16,11 +16,7 @@
 - 'tests/' - автотесты
 
 ## Технологии 
-Каждый разработчик сможет использовать удобный и знакомый ему стек (ну или предложу я) 
-- Python, PostgreSQL, c++ 
-- любой фреймворк: aiogram, FastAPI и другие
-
-позже все сервисы будут объедены Docker Compose.
+Python, PostgreSQL, FastAPI, c++, docker
 
 ## подготовка к работе
 - скачать репозиторий git clone https://github.com/Ivan-teapot/tgbot_profRK
