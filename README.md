@@ -24,5 +24,5 @@
 
 ## подготовка к работе
 - скачать репозиторий git clone https://github.com/Ivan-teapot/tgbot_profRK
-- активация виртуального окружения: source venv/bin/activate
+- активация виртуального окружения: venv\Scripts\activate
 - скопируйте папку .env.example и создайте .env . Туда вы запишите свои данные
