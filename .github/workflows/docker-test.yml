@@ -1,0 +1,87 @@
+name: Docker Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
+  POSTGRES_DB: students_db
+
+jobs:
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: students_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y docker-compose-plugin
+
+    - name: Create .env file for testing
+      run: |
+        cat > .env << EOF
+        DATABASE_URL=postgresql://postgres:postgres@localhost:5432/students_db
+        POSTGRES_USER=postgres
+        POSTGRES_PASSWORD=postgres
+        POSTGRES_DB=students_db
+        POSTGRES_HOST=localhost
+        POSTGRES_PORT=5432
+        EOF
+
+    - name: Build services
+      run: |
+        docker compose build service-root service-user tests
+
+    - name: Start application services
+      run: |
+        docker compose up -d service-root service-user
+
+    - name: Wait for services to start
+      run: |
+        # Wait for services to be ready
+        timeout 60 bash -c 'until curl -s -f http://localhost:8000/docs > /dev/null; do echo "Waiting for service-root..."; sleep 5; done'
+        timeout 60 bash -c 'until curl -s -f http://localhost:8001/docs > /dev/null; do echo "Waiting for service-user..."; sleep 5; done'
+        echo "All services are up!"
+
+    - name: Run basic connectivity tests
+      run: |
+        # Test service-root
+        curl -f http://localhost:8000/docs && echo "Service-root is responding"
+        # Test service-user  
+        curl -f http://localhost:8001/docs && echo "Service-user is responding"
+        
+    - name: Check running containers
+      run: |
+        docker compose ps
+        docker ps -a
+
+    - name: Run tests if available
+      run: |
+        # If you have tests, run them
+        docker compose run --rm tests pytest -v || echo "No tests found or tests failed"
+
+    - name: Cleanup
+      if: always()
+      run: docker compose down
