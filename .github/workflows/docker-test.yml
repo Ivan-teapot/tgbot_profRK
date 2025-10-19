@@ -52,32 +52,17 @@ jobs:
       with:
         python-version: '3.12.1'
     
-    - name: Create and activate virtual environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
+    - name: Create virtual environment
+      run: python -m venv venv
     
-    - name: Install isort in virtual environment
+    - name: Install isort
       run: |
         source venv/bin/activate
         pip install isort colorama
     
-    - name: Create isort config
-      run: |
-        cat > .isort.cfg << EOF
-        [settings]
-        profile = black
-        multi_line_output = 3
-        line_length = 88
-        known_first_party = app,services,utils
-        include_trailing_comma = true
-        force_grid_wrap = 0
-        use_parentheses = true
-        ensure_newline_before_comments = true
-        EOF
-    
     - name: Check import sorting with detailed output
       run: |
+        source venv/bin/activate
         echo "📦 Running isort import sorting..."
         echo "📋 Files that need import sorting:"
         isort --check-only . --verbose || true
