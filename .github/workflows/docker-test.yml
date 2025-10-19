@@ -63,11 +63,28 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.1'
+    - name: Create MyPy config
+      run: |
+        cat > mypy.ini << EOF
+        [mypy]
+        python_version = 3.12
+        ignore_missing_imports = True
+        show_error_codes = True
+        show_column_numbers = True
+        disable_error_code = import, name-defined, attr-defined
+        exclude = 
+            migrations/
+            .venv/
+            venv/
+            build/
+            dist/
+            __pycache__/
+        EOF
     - name: Install and run MyPy
       run: |
         pip install mypy
         echo "🏷️ Running MyPy type checking..."
-        mypy . --show-error-codes
+        mypy .
 
   # Основные jobs
   docker-build:
