@@ -105,7 +105,7 @@ style: - исправление форматирования
 git commit -m "feat(db): add user profile table with indexes"   
 git commit -m "fix(service): handle null values in payment processing"   
 
-
+После того, как вы сделали push, перейдите в github, 
 ❗ Важные правила   
 Не коммитить напрямую в основные ветки   
 Всегда создавать feature-ветки для новой работы   
