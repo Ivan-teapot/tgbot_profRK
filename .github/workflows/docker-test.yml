@@ -60,7 +60,7 @@ jobs:
     - name: Install isort in virtual environment
       run: |
         source venv/bin/activate
-        pip install isort
+        pip install isort colorama
     
     - name: Create isort config
       run: |
