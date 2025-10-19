@@ -293,9 +293,18 @@ jobs:
             local start_time=$(date +%s)
             
             while true; do
-                if nc -z localhost $port 2>/dev/null; then
+                # Используем curl для проверки HTTP сервисов
+                if curl -s "http://localhost:$port" > /dev/null 2>&1; then
                     echo "✅ $service is responding on port $port"
                     return 0
+                fi
+                
+                # Для базы данных используем специальную проверку
+                if [ "$service" = "db" ]; then
+                    if docker compose exec -T db pg_isready -U postgres > /dev/null 2>&1; then
+                        echo "✅ $service is ready"
+                        return 0
+                    fi
                 fi
                 
                 local logs=$(docker compose logs "$service" --tail=5 2>/dev/null || echo "No logs yet")
