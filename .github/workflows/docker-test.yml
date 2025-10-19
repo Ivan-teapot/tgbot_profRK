@@ -18,11 +18,19 @@ jobs:
       with:
         python-version: '3.12.1'
     
-    - name: Install Black
-      run: pip install black
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+    
+    - name: Install Black in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install black
     
     - name: Check code formatting with detailed output
       run: |
+        source venv/bin/activate
         echo "🎨 Running Black formatting check..."
         echo "📋 Files that need reformatting:"
         black --check . --verbose || true
@@ -44,8 +52,15 @@ jobs:
       with:
         python-version: '3.12.1'
     
-    - name: Install isort with color support
-      run: pip install isort colorama
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+    
+    - name: Install isort in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install isort
     
     - name: Create isort config
       run: |
@@ -84,8 +99,15 @@ jobs:
       with:
         python-version: '3.12.1'
     
-    - name: Install Flake8
-      run: pip install flake8
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+    
+    - name: Install flake8 in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install flake8
     
     - name: Create Flake8 config
       run: |
@@ -129,8 +151,15 @@ jobs:
       with:
         python-version: '3.12.1'
     
-    - name: Install MyPy
-      run: pip install mypy
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+    
+    - name: Install mypy in virtual environment
+      run: |
+        source venv/bin/activate
+        pip install mypy
     
     - name: Create MyPy config
       run: |
@@ -162,16 +191,11 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+    - name: Build images with docker compose
+      run: |
+        echo "🏗️ Building Docker images..."
+        # Docker все равно использует встроенный кэш слоев
+        docker compose build --no-cache=false
 
     - name: Build images with cache
       uses: docker/build-push-action@v5
