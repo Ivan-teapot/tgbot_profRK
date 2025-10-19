@@ -21,4 +21,5 @@ Python, PostgreSQL, FastAPI, c++, docker
 ## подготовка к работе
 - скачать репозиторий git clone https://github.com/Ivan-teapot/tgbot_profRK
 - активация виртуального окружения: venv\Scripts\activate
+- скачиваем все фреймворки pip install -r requirements.txt
 - скопируйте папку .env.example и создайте .env . Туда вы запишите свои данные

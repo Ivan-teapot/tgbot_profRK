@@ -1,5 +1,5 @@
 # check=skip=UndefinedVar
-FROM python:3.12-slim
+FROM python:3.12-slim AS builder
 
 # Install system dependencies if needed
 RUN apt-get update && apt-get install -y \
