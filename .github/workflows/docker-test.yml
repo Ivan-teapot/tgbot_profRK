@@ -97,6 +97,15 @@ jobs:
         docker compose logs service-root || echo "No service-root logs"
         docker compose logs service-user || echo "No service-user logs"
         docker compose logs db || echo "No db logs"
+    
+    - name: Lint and format
+      run: |
+        echo "🔧 Linting and formatting..."
+        pip install black isort flake8 mypy
+        black --check .
+        isort --check-only .
+        flake8 .
+        mypy . 
 
     - name: Cleanup
       if: always()
