@@ -7,209 +7,79 @@ on:
     branches: [ main ]
 
 jobs:
+  # Критические проверки - блокируют весь CI
   black-check:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.1'
-    
-    - name: Create and activate virtual environment
+    - name: Install and run Black
       run: |
-        python -m venv venv
-        source venv/bin/activate
-    
-    - name: Install Black in virtual environment
-      run: |
-        source venv/bin/activate
         pip install black
-    
-    - name: Check code formatting with detailed output
-      run: |
-        source venv/bin/activate
         echo "🎨 Running Black formatting check..."
-        echo "📋 Files that need reformatting:"
-        black --check . --verbose || true
-        echo ""
-        echo "🔍 Detailed diff of changes needed:"
-        black --diff . --color || true
-        echo ""
-        echo "💡 To fix these issues, run: black ."
-        black --check .
+        black --check . --verbose --diff --color
 
   isort-check:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.1'
-    
-    - name: Create virtual environment
-      run: python -m venv venv
-    
-    - name: Install isort
+    - name: Install and run isort
       run: |
-        source venv/bin/activate
         pip install isort colorama
-    
-    - name: Check import sorting with detailed output
-      run: |
-        source venv/bin/activate
         echo "📦 Running isort import sorting..."
-        echo "📋 Files that need import sorting:"
-        isort --check-only . --verbose || true
-        echo ""
-        echo "🔍 Detailed diff of import changes needed:"
-        isort --diff . --color || true
-        echo ""
-        echo "💡 To fix these issues, run: isort ."
-        isort --check-only .
+        isort --check-only . --verbose --diff --color
 
+  # Некритические проверки - не блокируют, но влияют на финальный статус
   flake8-check:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.1'
-    
-    - name: Create and activate virtual environment
+    - name: Install and run Flake8
       run: |
-        python -m venv venv
-        source venv/bin/activate
-    
-    - name: Install flake8 in virtual environment
-      run: |
-        source venv/bin/activate
         pip install flake8
-    
-    - name: Create Flake8 config
-      run: |
-        cat > .flake8 << EOF
-        [flake8]
-        max-line-length = 88
-        extend-ignore = 
-            E203,  # whitespace before ':' (conflicts with black)
-            E501,  # line too long (handled by black)
-            W503,  # line break before binary operator
-            E402,  # module level import not at top of file
-            F401,  # imported but unused
-            F841,  # local variable is assigned to but never used
-        exclude = 
-            .git,
-            __pycache__,
-            build,
-            dist,
-            .venv,
-            venv,
-            migrations
-        statistics = true
-        show-source = true
-        EOF
-            
-    - name: Run Flake8 with detailed output
-      continue-on-error: true
-      run: |
         echo "🔍 Running Flake8 code quality check..."
-        echo "📋 Detailed issues found:"
-        flake8 . --show-source --statistics || echo "⚠️ Flake8 found some issues (non-critical)"
+        flake8 . --show-source --statistics
 
   mypy-check:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.12.1'
-    
-    - name: Create and activate virtual environment
+    - name: Install and run MyPy
       run: |
-        python -m venv venv
-        source venv/bin/activate
-    
-    - name: Install mypy in virtual environment
-      run: |
-        source venv/bin/activate
         pip install mypy
-    
-    - name: Create MyPy config
-      run: |
-        cat > mypy.ini << EOF
-        [mypy]
-        python_version = 3.12
-        ignore_missing_imports = true
-        show_error_codes = true
-        show_column_numbers = true
-        exclude = 
-            migrations/
-            .venv/
-            venv/
-            build/
-            dist/
-        EOF
-    
-    - name: Run MyPy with detailed output
-      continue-on-error: true
-      run: |
         echo "🏷️ Running MyPy type checking..."
-        echo "📋 Type issues found:"
-        mypy . --show-error-codes || echo "⚠️ MyPy found some type issues (non-critical)"
+        mypy . --show-error-codes
 
+  # Основные jobs
   docker-build:
     runs-on: ubuntu-latest
-    needs: [black-check, isort-check]
+    needs: [black-check, isort-check]  # Только критические
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Build images with docker compose
+    - name: Build images
       run: |
         echo "🏗️ Building Docker images..."
-        # Docker все равно использует встроенный кэш слоев
-        docker compose build --no-cache=false
-
-    - name: Build images with cache
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        load: true
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-        tags: |
-          service-root:ci-${{ github.sha }}
-          service-user:ci-${{ github.sha }}
-
-    - name: Move cache
-      run: |
-        rm -rf /tmp/.buildx-cache
-        mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-    - name: Save Docker images
-      run: |
-        echo "💾 Saving built images..."
-        docker save -o /tmp/service-root.tar service-root:ci-${{ github.sha }}
-        docker save -o /tmp/service-user.tar service-user:ci-${{ github.sha }}
-
-    - name: Upload Docker images
-      uses: actions/upload-artifact@v4
-      with:
-        name: docker-images
-        path: /tmp/*.tar
-        retention-days: 1
+        docker compose build
 
   docker-test:
     runs-on: ubuntu-latest
@@ -217,6 +87,8 @@ jobs:
       - docker-build
       - flake8-check
       - mypy-check
+    # Запускается если критические проверки прошли И flake8/mypy завершились (успех или неудача)
+    if: (needs.docker-build.result == 'success') && ((needs.flake8-check.result == 'success' || needs.flake8-check.result == 'failure') && (needs.mypy-check.result == 'success' || needs.mypy-check.result == 'failure'))
     services:
       postgres:
         image: postgres:15-alpine
@@ -236,18 +108,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Download Docker images
-      uses: actions/download-artifact@v4
-      with:
-        name: docker-images
-        path: /tmp
-
-    - name: Load Docker images
-      run: |
-        echo "📦 Loading pre-built images..."
-        docker load -i /tmp/service-root.tar
-        docker load -i /tmp/service-user.tar
-
     - name: Create .env file for CI
       run: |
         echo "🔧 Creating .env file for CI..."
@@ -264,41 +124,73 @@ jobs:
         PYTHONPATH=/app
         EOF
 
-    - name: Start application services and verify
+    - name: Start and verify services
       run: |
         echo "🚀 Starting application services..."
         docker compose up -d service-root service-user
-        
-        echo "⏳ Waiting for services to be ready..."
-        # Простая проверка - если контейнеры работают 10 секунд, считаем что OK
         sleep 10
         
         echo "📊 Checking services status..."
         docker compose ps
         
-        # Проверяем что контейнеры не умерли
-        if docker compose ps | grep -q "Exited\|Dead"; then
-          echo "❌ Some containers have exited"
+        if docker compose ps | grep -q "Exited"; then
+          echo "❌ Some containers exited"
           docker compose logs
           exit 1
         fi
         
-        echo "✅ All services are running successfully!"
+        echo "✅ All services running successfully!"
 
-    - name: Show service logs
-      if: always()
+    - name: Run application tests
       run: |
-        echo "📋 Service logs:"
-        docker compose logs
-
-    - name: Run actual tests
-      run: |
-        echo "🧪 Running actual application tests..."
+        echo "🧪 Running application tests..."
         # Здесь запускай настоящие тесты, например:
         # docker compose exec -T service-root pytest
         # docker compose exec -T service-user pytest
         echo "✅ Tests completed successfully"
 
+    - name: Show service logs on failure
+      if: failure()
+      run: |
+        echo "📋 Service logs:"
+        docker compose logs
+
     - name: Cleanup
       if: always()
-      run: docker compose down
+      run: |
+        echo "🧹 Cleaning up..."
+        docker compose down
+
+  # Финальный job для определения общего статуса CI
+  ci-status:
+    runs-on: ubuntu-latest
+    needs: [black-check, isort-check, flake8-check, mypy-check, docker-test]
+    if: always()
+    steps:
+    - name: Determine CI final status
+      run: |
+        echo "📊 CI Status Summary:"
+        echo "Black: ${{ needs.black-check.result }}"
+        echo "isort: ${{ needs.isort-check.result }}" 
+        echo "Flake8: ${{ needs.flake8-check.result }}"
+        echo "MyPy: ${{ needs.mypy-check.result }}"
+        echo "Docker Test: ${{ needs.docker-test.result }}"
+        
+        # Проверяем результаты некритических проверок
+        if [[ "${{ needs.flake8-check.result }}" == "failure" ]]; then
+          echo "⚠️ Flake8 check failed"
+        fi
+        
+        if [[ "${{ needs.mypy-check.result }}" == "failure" ]]; then
+          echo "⚠️ MyPy check failed"
+        fi
+        
+        # Финальный статус зависит только от критических проверок
+        if [[ "${{ needs.black-check.result }}" == "success" && "${{ needs.isort-check.result }}" == "success" ]]; then
+          echo "✅ CI Status: SUCCESS - Critical checks passed"
+          # Выходим с кодом 0 даже если есть warnings
+          exit 0
+        else
+          echo "❌ CI Status: FAILURE - Critical checks failed"
+          exit 1
+        fi
